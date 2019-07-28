@@ -1,0 +1,2 @@
+tensorflow>=1.14.0
+pillow>=2.1.0
