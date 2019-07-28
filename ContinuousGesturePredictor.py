@@ -8,10 +8,14 @@ from PIL import Image
 import cv2
 import imutils
 
-import serial
 import time
 
-ser = serial.Serial('/dev/cu.usbserial-14130', 9600)
+serial_port_num ='14130'
+
+_USE_ARDUINO = False
+if _USE_ARDUINO:
+    import serial
+    ser = serial.Serial('/dev/cu.usbserial-' + serial_port_num, 9600)
 
 paper = b'0'
 rock = b'1'
@@ -168,39 +172,40 @@ def showStatistics(predictedClass, confidence, AI_win):
 
     textImage = np.zeros((300,512,3), np.uint8)
     className = ""
-    
-    if predictedClass == 0 and confidence > 0.90:
-        className = "Rock"
-        
-        if AI_win:
-            ser.write(paper)
+
+    if _USE_ARDUINO:
+        if predictedClass == 0 and confidence > 0.90:
+            className = "Rock"
+
+            if AI_win:
+                ser.write(paper)
+            else:
+                ser.write(scissor)
+            ser.close
+
+
+
+        elif predictedClass == 1 and confidence > 0.90:
+            className = "Paper"
+
+            if AI_win:
+                ser.write(scissor)
+            else:
+                ser.write(rock)
+            ser.close
+
+        elif predictedClass == 2 and confidence > 0.90:
+            className = "Scissor"
+            if AI_win:
+                ser.write(rock)
+            else:
+                ser.write(paper)
+            ser.close
+
         else:
-            ser.write(scissor)
-        ser.close
-
-
-
-    elif predictedClass == 1 and confidence > 0.90:
-        className = "Paper"
-        
-        if AI_win:
-            ser.write(scissor)
-        else:
-            ser.write(rock)
-        ser.close
-
-    elif predictedClass == 2 and confidence > 0.90:
-        className = "Scissor"
-        if AI_win:
-            ser.write(rock)
-        else:
-            ser.write(paper)
-        ser.close
-
-    else:
-        className = "None"
-        ser.write(reset)
-        ser.close
+            className = "None"
+            ser.write(reset)
+            ser.close
 
 
 
