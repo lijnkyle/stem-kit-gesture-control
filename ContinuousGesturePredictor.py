@@ -52,6 +52,8 @@ def segment(image, threshold=25):
     # find the absolute difference between background and current frame
     diff = cv2.absdiff(bg.astype("uint8"), image)
 
+    cv2.imshow("Difference", diff)
+
     # threshold the diff image so that we get the foreground
     thresholded = cv2.threshold(diff,
                                 threshold,
