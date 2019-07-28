@@ -9,8 +9,18 @@ import cv2
 import imutils
 
 import serial
-ser = serial.Serial('/dev/cu.usbserial-14140', 9600)
+import time
 
+ser = serial.Serial('/dev/cu.usbserial-14130', 9600)
+
+paper = b'0'
+rock = b'1'
+scissor = b'2'
+reset = b'1'
+
+AI_win = True
+
+start_gesture = True
 
 # global variables
 bg = None
@@ -112,11 +122,13 @@ def main():
                 # draw the segmented region and display the frame
                 cv2.drawContours(clone, [segmented + (right, top)], -1, (0, 0, 255))
                 if start_recording:
+
                     cv2.imwrite('Temp.png', thresholded)
                     resizeImage('Temp.png')
                     predictedClass, confidence = getPredictedClass()
-                    showStatistics(predictedClass, confidence)
+                    showStatistics(predictedClass, confidence, AI_win)
                     #start_recording = False
+#time.sleep(3)
                 cv2.imshow("Thesholded", thresholded)
 
         # draw the segmented hand
@@ -134,9 +146,16 @@ def main():
         # if the user pressed "q", then stop looping
         if keypress == ord("q"):
             break
-        
+                
         if keypress == ord("s"):
+            AI_win = True
             start_recording = True
+        
+        if keypress == ord("z"):
+            AI_win = False
+            start_recording = True
+
+
 
 def getPredictedClass():
     # Predict
@@ -145,44 +164,84 @@ def getPredictedClass():
     prediction = model.predict([gray_image.reshape(89, 100, 1)])
     return np.argmax(prediction), (np.amax(prediction) / (prediction[0][0] + prediction[0][1] + prediction[0][2]))
 
-def showStatistics(predictedClass, confidence):
+def showStatistics(predictedClass, confidence, AI_win):
 
     textImage = np.zeros((300,512,3), np.uint8)
     className = ""
-
-    if predictedClass == 0:
-        className = "Swing"
-        ser.write(b'1')
+    
+    if predictedClass == 0 and confidence > 0.90:
+        className = "Rock"
+        
+        if AI_win:
+            ser.write(paper)
+        else:
+            ser.write(scissor)
         ser.close
 
 
-    elif predictedClass == 1:
-        className = "Palm"
-        ser.write(b'2')
+
+    elif predictedClass == 1 and confidence > 0.90:
+        className = "Paper"
+        
+        if AI_win:
+            ser.write(scissor)
+        else:
+            ser.write(rock)
         ser.close
 
-    elif predictedClass == 2:
-        className = "Fist"
-        ser.write(b'0')
+    elif predictedClass == 2 and confidence > 0.90:
+        className = "Scissor"
+        if AI_win:
+            ser.write(rock)
+        else:
+            ser.write(paper)
+        ser.close
+
+    else:
+        className = "None"
+        ser.write(reset)
         ser.close
 
 
-    cv2.putText(textImage,"Pedicted Class : " + className, 
-    (30, 30), 
+
+    cv2.putText(textImage,"AI : "+ str(AI_win),
+    (30, 30),
+    cv2.FONT_HERSHEY_SIMPLEX,
+    1,
+    (255, 255, 255),
+    2)
+
+
+
+    cv2.putText(textImage,"Pedicted Class : " + className,
+    (30, 100),
     cv2.FONT_HERSHEY_SIMPLEX, 
     1,
     (255, 255, 255),
     2)
 
     cv2.putText(textImage,"Confidence : " + str(confidence * 100) + '%', 
-    (30, 100), 
+    (30, 200),
     cv2.FONT_HERSHEY_SIMPLEX, 
     1,
     (255, 255, 255),
     2)
+
+
+
     cv2.imshow("Statistics", textImage)
 
 
+
+
+
+def countdown(t):
+    while t:
+        mins, secs = divmod(t, 60)
+        timeformat = '{:02d}:{:02d}'.format(mins, secs)
+        print(timeformat, end='\r')
+        time.sleep(1)
+        t -= 1
 
 
 # Model defined
