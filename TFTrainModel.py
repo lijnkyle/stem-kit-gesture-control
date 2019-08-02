@@ -1,4 +1,3 @@
-
 from keras.utils import to_categorical
 import time
 import tensorflow as tf

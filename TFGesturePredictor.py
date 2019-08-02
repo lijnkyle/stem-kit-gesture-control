@@ -10,6 +10,7 @@ import imutils
 from tensorflow import keras
 import time
 import os
+
 from keras.preprocessing.image import ImageDataGenerator
 
 serial_port_num ='14130'
@@ -24,6 +25,9 @@ rock = b'1'
 scissor = b'2'
 reset = b'1'
 
+cwd = os.path.dirname(__file__)
+img_path = os.path.join(cwd, 'real-time-image/temp.png')
+
 AI_win = True
 
 start_gesture = True
@@ -35,7 +39,7 @@ datagen = ImageDataGenerator(rescale = 1./255)
 
 def resizeImage(imageName):
     img = Image.open(imageName)
-    img = img.resize((150,150),Image.ANTIALIAS)
+    img = img.resize((150,150), Image.ANTIALIAS)
     img.save(imageName)
 
 #def run_avg(image, aWeight):
@@ -47,17 +51,6 @@ def resizeImage(imageName):
 #
 #    # compute weighted average, accumulate it and update the background
 #    cv2.accumulateWeighted(image, bg, aWeight)
-
-
-def extract_features(directory, sample_count):
-    features=np.zeros(shape=(sample_count, 4, 4, 512))
-    labels=np.zeros(shape=(sample_count))
-    generator=datagen.flow_from_directory(directory,target_size=(150,150),batch_size=1,class_mode='categorical')
-    for inputs_batch, labels_batch in generator:
-        features_batch=pre_model.predict(inputs_batch)
-        features[0]=features_batch
-        labels[0]=labels_batch
-    return features, labels
 
 def main():
     
@@ -115,17 +108,10 @@ def main():
                     #draw the segmented region and display the frame
 #                cv2.drawContours(clone, [segmented + (right, top)], -1, (0, 0, 255))
         if start_recording:
-
-#            cv2.imwrite('Temp.png', roi)
-            tempdir = os.path.join('real-time-image','x')
-            cv2.imwrite(os.path.join(tempdir, 'Temp.png'),roi)
-            
-            resizeImage('Temp.png')
-            predictedClass, confidence = getPredictedClass()
+            cv2.imwrite(img_path ,roi)
+            resizeImage(temp_img_dir)
+            confidence, predictedClass = getPredictedClass()
             showStatistics(predictedClass, confidence, AI_win)
-                    #start_recording = False
-#time.sleep(3)
-#                cv2.imshow("Thesholded", thresholded)
 
         # draw the segmented hand
         cv2.rectangle(clone, (left, top), (right, bottom), (0,255,0), 2)
@@ -155,41 +141,34 @@ def main():
             AI_win = False
             start_recording = True
 
-
-cwd = os.path.dirname(__file__)
-abs_file_path = os.path.join(cwd,'real-time-image')
-print(abs_file_path)
-
+from keras.preprocessing import image
+from keras.applications.resnet50 import preprocess_input, decode_predictions
 
 def getPredictedClass():
     # Predict
-    image = cv2.imread(os.path.join('real-time-image', 'Temp.png'))
-    pre_features, pre_labels = extract_features(abs_file_path, 1)
-    pre_features = np.reshape(pre_features, (1,4*4*512))
-    pre_labels = to_categorical(pre_labels)
-    print(pre_labels)
-    prediction = model.predict(pre_features)
+    img = image.load_img(img_path, target_size=(150, 150))
+    x = image.img_to_array(img)
+    x = np.expand_dims(x, axis=0)
+
+    predicted_features = pre_model.predict(preprocess_input(x))
+    prediction = model.predict(np.reshape(predicted_features, (1,4*4*512)))
     print(prediction)
-    return np.amax(prediction),0
-    #prediction = model.predict([image.reshape(150, 150, 1)])
-#return np.argmax(prediction), (np.amax(prediction) / (prediction[0][0] + prediction[0][1] + prediction[0][2]))
+    return np.amax(prediction), np.argmax(prediction)
 
 def showStatistics(predictedClass, confidence, AI_win):
 
     textImage = np.zeros((300,512,3), np.uint8)
-    className = ""
 
     if predictedClass == 0 and confidence > 0.90:
         className = "Rock"
-        
-        if _USE_ARDUINO:
 
+        if _USE_ARDUINO:
 
             if AI_win:
                 ser.write(paper)
             else:
                 ser.write(scissor)
-            ser.close
+            ser.close()
 
 
 
@@ -201,7 +180,7 @@ def showStatistics(predictedClass, confidence, AI_win):
                 ser.write(scissor)
             else:
                 ser.write(rock)
-            ser.close
+            ser.close()
 
     elif predictedClass == 2 and confidence > 0.90:
         className = "Scissor"
@@ -211,7 +190,7 @@ def showStatistics(predictedClass, confidence, AI_win):
                 ser.write(rock)
             else:
                 ser.write(paper)
-            ser.close
+            ser.close()
 
     else:
         className = "None"
@@ -245,7 +224,7 @@ def showStatistics(predictedClass, confidence, AI_win):
     cv2.imshow("Statistics", textImage)
 
 pre_model = keras.applications.vgg19.VGG19(include_top=False, weights='imagenet', input_shape=(150,150,3))
-model = keras.models.load_model('TrainedModel/GestureRecogModel.h5')
+model = keras.models.load_model(os.path.join(cwd, 'TrainedModel' ,'TLTrainedModel.h5.h5'))
 model.summary()
 main()
 
