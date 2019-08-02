@@ -2,3 +2,6 @@ tensorflow>=1.14.0
 pillow>=2.1.0
 imutils==0.5.2
 numpy==1.16.0
+opencv-python=>4.1.0.25
+tflearn=>0.3.2
+imutils=>0.5.2
