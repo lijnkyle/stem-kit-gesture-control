@@ -109,7 +109,7 @@ def main():
 #                cv2.drawContours(clone, [segmented + (right, top)], -1, (0, 0, 255))
         if start_recording:
             cv2.imwrite(img_path ,roi)
-            resizeImage(temp_img_dir)
+            resizeImage(img_path)
             confidence, predictedClass = getPredictedClass()
             showStatistics(predictedClass, confidence, AI_win)
 
@@ -224,7 +224,7 @@ def showStatistics(predictedClass, confidence, AI_win):
     cv2.imshow("Statistics", textImage)
 
 pre_model = keras.applications.vgg19.VGG19(include_top=False, weights='imagenet', input_shape=(150,150,3))
-model = keras.models.load_model(os.path.join(cwd, 'TrainedModel' ,'TLTrainedModel.h5.h5'))
+model = keras.models.load_model(os.path.join(cwd, 'TrainedModel' ,'TLTrainedModel.h5'))
 model.summary()
 main()
 
