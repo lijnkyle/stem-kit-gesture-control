@@ -1,7 +1,25 @@
+
+# how to get your train & test images?
+#
+#1. change the global total_image
+#2. choose the the directory in which you wanna store the images followed by the image name, I already wrote down all the directories as comment
+#3. run this file
+#4. press s to start recording, press v to pause
+
+
 # organize imports
 import cv2
 import imutils
 import numpy as np
+
+
+
+# change this value before running
+# train = 1000
+# test = 100
+total_image = 1000
+
+
 
 # global variables
 bg = None
@@ -28,7 +46,7 @@ def segment(image, threshold=25):
                                 cv2.THRESH_BINARY)[1]
 
     # get the contours in the thresholded image
-    (_, cnts, _) = cv2.findContours(thresholded.copy(),
+    (cnts, _) = cv2.findContours(thresholded.copy(),
                                     cv2.RETR_EXTERNAL,
                                     cv2.CHAIN_APPROX_SIMPLE)
 
@@ -101,8 +119,18 @@ def main():
                     if start_recording:
 
                         # Mention the directory in which you wanna store the images followed by the image name
-                        cv2.imwrite("Dataset/FistTest/fist_" + str(image_num) + '.png', thresholded)
+                        
+                        cv2.imwrite("Dataset/PaperTest/paper_" + str(image_num) + '.png', thresholded)
+#                        cv2.imwrite("Dataset/PaperImages/paper_" + str(image_num) + '.png', thresholded)
+#
+#                        cv2.imwrite("Dataset/RockTest/rock_" + str(image_num) + '.png', thresholded)
+#                        cv2.imwrite("Dataset/RockImages/rock_" + str(image_num) + '.png', thresholded)
+#
+#                        cv2.imwrite("Dataset/ScissorTest/scissor_" + str(image_num) + '.png', thresholded)
+#                        cv2.imwrite("Dataset/ScissorImages/scissor_" + str(image_num) + '.png', thresholded)
+
                         image_num += 1
+                        print(image_num)
                     cv2.imshow("Thesholded", thresholded)
 
             # draw the segmented hand
@@ -118,12 +146,14 @@ def main():
             keypress = cv2.waitKey(1) & 0xFF
 
             # if the user pressed "q", then stop looping
-            if keypress == ord("q") or image_num > 100:
+            if keypress == ord("q") or image_num > total_image:
                 break
         
             if keypress == ord("s"):
                 start_recording = True
-
+            if keypress == ord("v"):
+                start_recording = False
+                    
         else:
             print("[Warning!] Error input, Please check your(camra Or video)")
             break
