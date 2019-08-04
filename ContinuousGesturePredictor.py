@@ -10,7 +10,7 @@ import imutils
 import time
 
 
-
+#how to check your serial port num?
 #open arudino ide and check the serial port num (appears on the lower right corner)
 serial_port_num ='14240'
 
@@ -57,7 +57,6 @@ def segment(image, threshold=25):
 
     # find the absolute difference between background and current frame
     diff = cv2.absdiff(bg.astype("uint8"), image)
-    cv2.imshow("Difference", diff)
     
     # print the array of diff
     diff_arr = np.asarray(diff)
@@ -68,6 +67,13 @@ def segment(image, threshold=25):
                                 threshold,
                                 255,
                                 cv2.THRESH_BINARY)[1]
+                                
+    cv2.putText(diff,'diff',(50,25), cv2.FONT_HERSHEY_SIMPLEX, 1, (200,255,155), 2, cv2.LINE_AA)
+    cv2.putText(thresholded,'thresholded',(50,25), cv2.FONT_HERSHEY_SIMPLEX, 1, (200,255,155), 2, cv2.LINE_AA)
+    # concatenate 2 windows: diff, thresholded
+    numpy_horizontal_concat = np.concatenate((diff, thresholded), axis=1)
+
+    cv2.imshow('diff & thresholded',numpy_horizontal_concat)
 
     #print the array of thresholded
     thresholded_arr = np.asarray(thresholded)
@@ -87,57 +93,41 @@ def segment(image, threshold=25):
         return (thresholded, segmented)
 
 
-def randomcolor():
-    return (np.random.randint(0,255),np.random.randint(0,255),np.random.randint(0,255))
-
-
 def multi_frame(roi):
+    #concatenate four windows into one
+    #roi, gray, red, green, blue
+
+    # I just resized the image to a quarter of its original size
+    image = cv2.resize(roi, (0, 0), None, 0.5, 0.5)
     
-    
+    #split image into 3 channels
     r_channel, g_channel, b_channel = cv2.split(roi)
-    
     r_channel = cv2.GaussianBlur(r_channel, (3, 3), 0)
     g_channel = cv2.GaussianBlur(g_channel, (3, 3), 0)
     b_channel = cv2.GaussianBlur(b_channel, (3, 3), 0)
-    
+    gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
 
-    height, width, ch = r_channel.shape
-    new_width, new_height = width + width/20, height + height/8
-    
-    # Crate a new canvas with new width and height.
-    red = np.ones((int(new_height), int(new_width), ch), dtype=np.uint8) * 125
-    green = np.ones((int(new_height), int(new_width), ch), dtype=np.uint8) * 125
-    blue = np.ones((int(new_height), int(new_width), ch), dtype=np.uint8) * 125
 
-    print('height')
-    print(height)
-    print('newHeight')
-    print(new_height)
-    print('width')
-    print(width)
-    print('newWidth')
-    print(new_width)
-    
-    # New replace the center of canvas with original image
-    padding_top, padding_left = 20, 10
-    if padding_top + height < new_height and padding_left + width < new_width:
-        red[padding_top:padding_top + height, padding_left:padding_left + width] = r_channel
-        green[padding_top:padding_top + height, padding_left:padding_left + width] = g_channel
-        blue[padding_top:padding_top + height, padding_left:padding_left + width] = b_channel
+    # Make the single channel to have three channels
+    red_3_channel = cv2.cvtColor(r_channel, cv2.COLOR_GRAY2BGR)
+    green_3_channel = cv2.cvtColor(g_channel, cv2.COLOR_GRAY2BGR)
+    blue_3_channel = cv2.cvtColor(b_channel, cv2.COLOR_GRAY2BGR)
+    gray_3_channel = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
 
-    else:
-        print("The Given padding exceeds the limits.")
+    # put text on the image
+    font = cv2.FONT_HERSHEY_SIMPLEX
+    cv2.putText(roi,'original',(50,25), font, 1, (200,255,155), 2, cv2.LINE_AA)
+    cv2.putText(gray_3_channel,'gray',(50,25), font, 1, (200,255,155), 2, cv2.LINE_AA)
+    cv2.putText(red_3_channel,'red',(50,25), font, 1, (200,255,155), 2, cv2.LINE_AA)
+    cv2.putText(green_3_channel,'green',(50,25), font, 1, (200,255,155), 2, cv2.LINE_AA)
+    cv2.putText(blue_3_channel,'blue',(50,25), font, 1, (200,255,155), 2, cv2.LINE_AA)
 
-    text1 = "red"
-    text2 = "green"
-    text3 = "blue"
+    #concatenate and display images
+    numpy_horizontal_concat = np.concatenate((roi, gray_3_channel, red_3_channel, green_3_channel, blue_3_channel), axis=1)
+    cv2.imshow('3 channels', numpy_horizontal_concat)
 
-    img1 = cv2.putText(canvas.copy(), text1, (int(0.25*width), 30), cv2.FONT_HERSHEY_COMPLEX, 1, randomcolor())
-    img2 = cv2.putText(canvas.copy(), text2, (int(0.25*width), 30), cv2.FONT_HERSHEY_COMPLEX, 1, randomcolor())
-    img3 = cv2.putText(canvas.copy(), text2, (int(0.25*width), 30), cv2.FONT_HERSHEY_COMPLEX, 1, randomcolor())
 
-    final = cv2.hconcat((img1, img2, img3))
-    cv2.imshow('final', final)
+
 
 
 
@@ -180,40 +170,11 @@ def main():
         # convert the roi to grayscale and blur it
         gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
         gray = cv2.GaussianBlur(gray, (3, 3), 0)
+
         
-
-        #multi_frame(roi)
-
-        r_channel, g_channel, b_channel = cv2.split(roi)
-
-        r_channel = cv2.GaussianBlur(r_channel, (3, 3), 0)
-        g_channel = cv2.GaussianBlur(g_channel, (3, 3), 0)
-        b_channel = cv2.GaussianBlur(b_channel, (3, 3), 0)
+        #concatenate four windows into one
+        multi_frame(roi)
         
-        cv2.imshow('red', r_channel)
-        cv2.imshow('green', g_channel)
-        cv2.imshow('blue', b_channel)
-#
-#        #skin color detection method
-#        lower = np.array([0, 48, 80], dtype = "uint8")
-#        upper = np.array([20, 255, 255], dtype = "uint8")
-#
-#        converted = cv2.cvtColor(roi, cv2.COLOR_BGR2HSV)
-#        skinMask = cv2.inRange(converted, lower, upper)
-#
-#        # apply a series of erosions and dilations to the mask
-#        # using an elliptical kernel
-#        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (11, 11))
-#        skinMask = cv2.erode(skinMask, kernel, iterations = 1)
-#        skinMask = cv2.dilate(skinMask, kernel, iterations = 1)
-#
-#        # blur the mask to help remove noise, then apply the
-#        # mask to the frame
-#        skinMask = cv2.GaussianBlur(skinMask, (7, 7), 1)
-#        skin = cv2.bitwise_and(roi, roi, mask = skinMask)
-#
-#        # show the skin in the image along with the mask
-#        cv2.imshow("images", np.hstack([roi, skin]))
 
         # to get the background, keep looking till a threshold is reached
         # so that our running average model gets calibrated
@@ -238,7 +199,7 @@ def main():
                     predictedClass, confidence = getPredictedClass()
                     showStatistics(predictedClass, confidence, AI_win)
                     #start_recording = False
-                cv2.imshow("Thesholded", thresholded)
+                    #cv2.imshow("Thesholded", thresholded)
 
         # draw the segmented hand
         cv2.rectangle(clone, (left, top), (right, bottom), (0,255,0), 2)
@@ -266,9 +227,9 @@ def main():
 
 
 def getPredictedClass():
+    
     #return a predicted class and the confidence level
     image = cv2.imread('Temp.png')
-    
     gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     prediction = model.predict([gray_image.reshape(89, 100, 1)])
     return np.argmax(prediction), (np.amax(prediction) / (prediction[0][0] + prediction[0][1] + prediction[0][2]))
@@ -277,46 +238,41 @@ def showStatistics(predictedClass, confidence, AI_win):
 
     textImage = np.zeros((300,512,3), np.uint8)
     className = ""
-
-    if predictedClass == 0 and confidence > 0.90:
-        className = "Rock"
-        if _USE_ARDUINO:
-        
-
-            if AI_win:
-                ser.write(paper)
-            else:
-                ser.write(scissor)
-            ser.close
-
-
-
-    elif predictedClass == 1 and confidence > 0.90:
-        className = "Paper"
-        if _USE_ARDUINO:
-            
-
-            if AI_win:
-                ser.write(scissor)
-            else:
-                ser.write(rock)
-            ser.close
-
-    elif predictedClass == 2 and confidence > 0.90:
-        className = "Scissor"
-        if _USE_ARDUINO:
-         
-
-            
-            if AI_win:
-                ser.write(rock)
-            else:
-                ser.write(paper)
-            ser.close
     
+    if confidence > 0.90:
+        
+        if predictedClass == 0:
+            className = "Rock"
+            if _USE_ARDUINO:
+
+                if AI_win:
+                    ser.write(paper)
+                else:
+                    ser.write(scissor)
+
+
+        elif predictedClass == 1:
+            className = "Paper"
+            if _USE_ARDUINO:
+                
+
+                if AI_win:
+                    ser.write(scissor)
+                else:
+                    ser.write(rock)
+
+        elif predictedClass == 2:
+            className = "Scissor"
+            if _USE_ARDUINO:
+                
+                if AI_win:
+                    ser.write(rock)
+                else:
+                    ser.write(paper)
+
     else:
         className = "None"
-
+        ser.write(reset)
 
 
 
