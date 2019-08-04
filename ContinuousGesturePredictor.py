@@ -7,12 +7,16 @@ import numpy as np
 from PIL import Image
 import cv2
 import imutils
-
 import time
 
-serial_port_num ='14130'
 
-_USE_ARDUINO = False
+
+#open arudino ide and check the serial port num (appears on the lower right corner)
+serial_port_num ='14240'
+
+#testing mode
+_USE_ARDUINO = True
+
 if _USE_ARDUINO:
     import serial
     ser = serial.Serial('/dev/cu.usbserial-' + serial_port_num, 9600)
@@ -22,9 +26,6 @@ rock = b'1'
 scissor = b'2'
 reset = b'1'
 
-AI_win = True
-
-start_gesture = True
 
 # global variables
 bg = None
@@ -43,22 +44,34 @@ def run_avg(image, aWeight):
     if bg is None:
         bg = image.copy().astype("float")
         return
+    
+    bgar = np.asarray(bg)
+    print(bgar)
 
     # compute weighted average, accumulate it and update the background
     cv2.accumulateWeighted(image, bg, aWeight)
 
 def segment(image, threshold=25):
     global bg
+    blockSize = 16
+
     # find the absolute difference between background and current frame
     diff = cv2.absdiff(bg.astype("uint8"), image)
-
     cv2.imshow("Difference", diff)
+    
+    # print the array of diff
+    diff_arr = np.asarray(diff)
+    print(diff_arr)
 
-    # threshold the diff image so that we get the foreground
+    # threshold the dff image so that we get the foreground
     thresholded = cv2.threshold(diff,
                                 threshold,
                                 255,
                                 cv2.THRESH_BINARY)[1]
+
+    #print the array of thresholded
+    thresholded_arr = np.asarray(thresholded)
+    print(thresholded_arr)
 
     # get the contours in the thresholded image
     (cnts, _) = cv2.findContours(thresholded.copy(),
@@ -73,12 +86,69 @@ def segment(image, threshold=25):
         segmented = max(cnts, key=cv2.contourArea)
         return (thresholded, segmented)
 
+
+def randomcolor():
+    return (np.random.randint(0,255),np.random.randint(0,255),np.random.randint(0,255))
+
+
+def multi_frame(roi):
+    
+    
+    r_channel, g_channel, b_channel = cv2.split(roi)
+    
+    r_channel = cv2.GaussianBlur(r_channel, (3, 3), 0)
+    g_channel = cv2.GaussianBlur(g_channel, (3, 3), 0)
+    b_channel = cv2.GaussianBlur(b_channel, (3, 3), 0)
+    
+
+    height, width, ch = r_channel.shape
+    new_width, new_height = width + width/20, height + height/8
+    
+    # Crate a new canvas with new width and height.
+    red = np.ones((int(new_height), int(new_width), ch), dtype=np.uint8) * 125
+    green = np.ones((int(new_height), int(new_width), ch), dtype=np.uint8) * 125
+    blue = np.ones((int(new_height), int(new_width), ch), dtype=np.uint8) * 125
+
+    print('height')
+    print(height)
+    print('newHeight')
+    print(new_height)
+    print('width')
+    print(width)
+    print('newWidth')
+    print(new_width)
+    
+    # New replace the center of canvas with original image
+    padding_top, padding_left = 20, 10
+    if padding_top + height < new_height and padding_left + width < new_width:
+        red[padding_top:padding_top + height, padding_left:padding_left + width] = r_channel
+        green[padding_top:padding_top + height, padding_left:padding_left + width] = g_channel
+        blue[padding_top:padding_top + height, padding_left:padding_left + width] = b_channel
+
+    else:
+        print("The Given padding exceeds the limits.")
+
+    text1 = "red"
+    text2 = "green"
+    text3 = "blue"
+
+    img1 = cv2.putText(canvas.copy(), text1, (int(0.25*width), 30), cv2.FONT_HERSHEY_COMPLEX, 1, randomcolor())
+    img2 = cv2.putText(canvas.copy(), text2, (int(0.25*width), 30), cv2.FONT_HERSHEY_COMPLEX, 1, randomcolor())
+    img3 = cv2.putText(canvas.copy(), text2, (int(0.25*width), 30), cv2.FONT_HERSHEY_COMPLEX, 1, randomcolor())
+
+    final = cv2.hconcat((img1, img2, img3))
+    cv2.imshow('final', final)
+
+
+
 def main():
+    
     # initialize weight for running average
     aWeight = 0.5
 
     # get the reference to the webcam
     camera = cv2.VideoCapture(0)
+    camera.set(cv2.CAP_PROP_EXPOSURE, 0.25)
 
     # region of interest (ROI) coordinates
     top, right, bottom, left = 10, 350, 225, 590
@@ -109,7 +179,41 @@ def main():
 
         # convert the roi to grayscale and blur it
         gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
-        gray = cv2.GaussianBlur(gray, (7, 7), 0)
+        gray = cv2.GaussianBlur(gray, (3, 3), 0)
+        
+
+        #multi_frame(roi)
+
+        r_channel, g_channel, b_channel = cv2.split(roi)
+
+        r_channel = cv2.GaussianBlur(r_channel, (3, 3), 0)
+        g_channel = cv2.GaussianBlur(g_channel, (3, 3), 0)
+        b_channel = cv2.GaussianBlur(b_channel, (3, 3), 0)
+        
+        cv2.imshow('red', r_channel)
+        cv2.imshow('green', g_channel)
+        cv2.imshow('blue', b_channel)
+#
+#        #skin color detection method
+#        lower = np.array([0, 48, 80], dtype = "uint8")
+#        upper = np.array([20, 255, 255], dtype = "uint8")
+#
+#        converted = cv2.cvtColor(roi, cv2.COLOR_BGR2HSV)
+#        skinMask = cv2.inRange(converted, lower, upper)
+#
+#        # apply a series of erosions and dilations to the mask
+#        # using an elliptical kernel
+#        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (11, 11))
+#        skinMask = cv2.erode(skinMask, kernel, iterations = 1)
+#        skinMask = cv2.dilate(skinMask, kernel, iterations = 1)
+#
+#        # blur the mask to help remove noise, then apply the
+#        # mask to the frame
+#        skinMask = cv2.GaussianBlur(skinMask, (7, 7), 1)
+#        skin = cv2.bitwise_and(roi, roi, mask = skinMask)
+#
+#        # show the skin in the image along with the mask
+#        cv2.imshow("images", np.hstack([roi, skin]))
 
         # to get the background, keep looking till a threshold is reached
         # so that our running average model gets calibrated
@@ -125,7 +229,7 @@ def main():
                 # segmented region
                 (thresholded, segmented) = hand
 
-                # draw the segmented region and display the frame
+                #draw the segmented region and display the frame
                 cv2.drawContours(clone, [segmented + (right, top)], -1, (0, 0, 255))
                 if start_recording:
 
@@ -134,7 +238,6 @@ def main():
                     predictedClass, confidence = getPredictedClass()
                     showStatistics(predictedClass, confidence, AI_win)
                     #start_recording = False
-#time.sleep(3)
                 cv2.imshow("Thesholded", thresholded)
 
         # draw the segmented hand
@@ -148,7 +251,6 @@ def main():
 
         # observe the keypress by the user
         keypress = cv2.waitKey(1) & 0xFF
-
         # if the user pressed "q", then stop looping
         if keypress == ord("q"):
             break
@@ -164,8 +266,9 @@ def main():
 
 
 def getPredictedClass():
-    # Predict
+    #return a predicted class and the confidence level
     image = cv2.imread('Temp.png')
+    
     gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     prediction = model.predict([gray_image.reshape(89, 100, 1)])
     return np.argmax(prediction), (np.amax(prediction) / (prediction[0][0] + prediction[0][1] + prediction[0][2]))
@@ -175,9 +278,10 @@ def showStatistics(predictedClass, confidence, AI_win):
     textImage = np.zeros((300,512,3), np.uint8)
     className = ""
 
-    if _USE_ARDUINO:
-        if predictedClass == 0 and confidence > 0.90:
-            className = "Rock"
+    if predictedClass == 0 and confidence > 0.90:
+        className = "Rock"
+        if _USE_ARDUINO:
+        
 
             if AI_win:
                 ser.write(paper)
@@ -187,8 +291,10 @@ def showStatistics(predictedClass, confidence, AI_win):
 
 
 
-        elif predictedClass == 1 and confidence > 0.90:
-            className = "Paper"
+    elif predictedClass == 1 and confidence > 0.90:
+        className = "Paper"
+        if _USE_ARDUINO:
+            
 
             if AI_win:
                 ser.write(scissor)
@@ -196,18 +302,21 @@ def showStatistics(predictedClass, confidence, AI_win):
                 ser.write(rock)
             ser.close
 
-        elif predictedClass == 2 and confidence > 0.90:
-            className = "Scissor"
+    elif predictedClass == 2 and confidence > 0.90:
+        className = "Scissor"
+        if _USE_ARDUINO:
+         
+
+            
             if AI_win:
                 ser.write(rock)
             else:
                 ser.write(paper)
             ser.close
+    
+    else:
+        className = "None"
 
-        else:
-            className = "None"
-            ser.write(reset)
-            ser.close
 
 
 
@@ -217,8 +326,6 @@ def showStatistics(predictedClass, confidence, AI_win):
     1,
     (255, 255, 255),
     2)
-
-
 
     cv2.putText(textImage,"Pedicted Class : " + className,
     (30, 100),
@@ -239,16 +346,6 @@ def showStatistics(predictedClass, confidence, AI_win):
     cv2.imshow("Statistics", textImage)
 
 
-
-
-
-def countdown(t):
-    while t:
-        mins, secs = divmod(t, 60)
-        timeformat = '{:02d}:{:02d}'.format(mins, secs)
-        print(timeformat, end='\r')
-        time.sleep(1)
-        t -= 1
 
 
 # Model defined
