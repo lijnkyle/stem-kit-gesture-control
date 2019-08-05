@@ -76,8 +76,9 @@ The main drawback of this method is the high hardware requirement.
 I tested this method on my Macbook Pro ( i5, 16GB ) with CPU.  Unfortunately, the fps I got was around 4, which is impossible to use it for our real time gesture recognition need. I've also tried reducing the webcam resolution as much as possible, but got no visible improvements.
 TensorFlow GPU support only works on Linux. Therefore, the method does not fit our goal.
 
-https://github.com/timctho/convolutional-pose-machines-tensorflow
-https://github.com/guiggh/hand_pose_action
+    https://github.com/timctho/convolutional-pose-machines-tensorflow
+
+    https://github.com/guiggh/hand_pose_action
 
 
 
