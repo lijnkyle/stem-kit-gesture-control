@@ -11,7 +11,7 @@ int LED_pin=12;
 int RECV_pin=13;
 IRrecv irrecv(RECV_pin); // Initiate IR signal input
 decode_results results; // Save signal structure
-word HEXcode;
+word HEXcode;  //HEXcode for IR remote control
 unsigned long time_release;
 
 
@@ -60,6 +60,8 @@ void all_motor_zeroing()
 //================================================================================================
 int state2deg(int finger, int state)
 {
+  //if state == 0, then finger down
+  
   if(state==0)
   {
     return abs(180-finger_zero_state_angle[finger-1]);
@@ -67,6 +69,7 @@ int state2deg(int finger, int state)
 
   else if (state==1)
   {
+   // if state == 1, then finger up
     return finger_zero_state_angle[finger-1];
   }
 
@@ -83,7 +86,7 @@ void finger_trig(int finger[], int num_finger )
   int finger_state_temp[5];
   for(int f=0;f<num_finger; f++)
   {
-    finger_state_temp[f]=abs(finger_state[finger[f]-1]-1);   //change state
+    finger_state_temp[f]=abs(finger_state[finger[f]-1]-1);   //change to opposite state
   }
   
   multi_motor_state_control(finger,finger_state_temp ,num_finger );
@@ -122,7 +125,7 @@ void state_print()
 //================================================================================================
 
 void gesture_paper(){
-          all_motor_zeroing();   
+  all_motor_zeroing();   
 }
 //================================================================================================
 
@@ -148,6 +151,7 @@ void gesture_rock(){
 void rock_paper_scissor_game() {
   
  if(Serial.available() > 0 ){
+  // if receive data
   
     serialData = Serial.read();
     
@@ -166,7 +170,8 @@ void rock_paper_scissor_game() {
 
 
 void IR_remote_control(){
-
+  // command for IR remote mode
+  
  if (irrecv.decode(&results)) // Don't read unless there you know there is data
   {
       time_release=millis();
@@ -178,12 +183,14 @@ void IR_remote_control(){
  //------1 : 2295 -----------------------------
       if (HEXcode == 2295)
       {
+        // move thumb
         int temp[]={1};
         finger_trig(temp, 1);
       }
  //------ 2 : 34935-----------------------------
       else if (HEXcode == 34935)
       {
+        // move index finger
         int temp[]={2};
         finger_trig(temp, 1 );
       }
@@ -191,18 +198,21 @@ void IR_remote_control(){
  //------ 3 : 18615-----------------------------
       else if(HEXcode == 18615) 
       {
+        // move middle finger
         int temp[]={3};
         finger_trig(temp, 1 );
       }
  //------ 4 : 10455-----------------------------
       else if(HEXcode==10455)
       {
+        // move ring finger
         int temp[]={4};
         finger_trig(temp, 1 );
       }
  //------ 5 : 43095-----------------------------
       else if(HEXcode==43095)
       {
+        // move little finger
         int temp[]={5};
         finger_trig(temp, 1 );
       }
@@ -324,9 +334,11 @@ void loop()
   }
 
 
+  //communicate with python
   rock_paper_scissor_game(); 
 
- 
+
+  //control by IR remote
   IR_remote_control();
   
 
