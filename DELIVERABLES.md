@@ -1,10 +1,10 @@
 # STEM kit hand gesture recognition deliberables
-- [X ] Project goal briefly
-- [X ] List all dependencies and provide detailed setup instructions
-- [X ] Source code (Python and Arduino, clean up, organize & comment well)
+- [X] Project goal briefly
+- [X] List all dependencies and provide detailed setup instructions
+- [X] Source code (Python and Arduino, clean up, organize & comment well)
 - [X] Briefly discuss all methods you tried that didn't work well and why
 - [ ] What is the unfinished portion (Advise on finishing up the unfinished portion)
-- [X ] Potential issues (Advice on future research/development)
+- [X] Potential issues (Advice on future research/development)
 - [ ] Conclusion (optional)
 
 
