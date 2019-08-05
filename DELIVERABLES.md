@@ -1,10 +1,10 @@
 # STEM kit hand gesture recognition deliberables
-- [ ] Project goal briefly
-- [ ] List all dependencies and provide detailed setup instructions
-- [ ] Source code (Python and Arduino, clean up, organize & comment well)
-- [ ] Briefly discuss all methods you tried that didn't work well and why
+- [X ] Project goal briefly
+- [X ] List all dependencies and provide detailed setup instructions
+- [X ] Source code (Python and Arduino, clean up, organize & comment well)
+- [X] Briefly discuss all methods you tried that didn't work well and why
 - [ ] What is the unfinished portion (Advise on finishing up the unfinished portion)
-- [ ] Potential issues (Advice on future research/development)
+- [X ] Potential issues (Advice on future research/development)
 - [ ] Conclusion (optional)
 
 
@@ -45,6 +45,13 @@ Sketch  ->  Include libraries  -> search IRremote (by shirriff) -> Install
 
 [ContinuousGesturePredictor.py]: Running this file opens up your webcam, takes continuous frames of your hand image, and then predicts the class of your hand gesture in realtime.
 
+## How to run the RealTime prediction
+
+Run the ContinuousGesturePredictor.py file and you will see a window named Video Feed appear on screen. Wait for a while until a window named Thresholded appears.
+
+The next step involves pressing "s" on your keyboard in order to start the real-time prediction.
+
+Bring your hand in the Green Box drawn inside Video Feed window in order to see the predictions. 
 
 
 ## Methods that I tried but failed
