@@ -61,7 +61,6 @@ This background elimination algorithm is highly sensitive to lighting conditions
 1. Skin detection method 
 The main drawback is that we are framing skin detection as a “color detection” problem. This assumes that we can easily specify the HSV values for ranges of pixel intensities that are considered skin.
 Since only a range of color is given to this color detection method, this method does not perform well enough under different lighting conditions. Another drawback of this method is that we have to assume users are all in the same ethnic group.
-
 This method does a little bit better than the background elimination under different backgrounds, but still does not reach our goal.
 
 
